@@ -1,41 +1,70 @@
-declare const acquireVsCodeApi: Function
+declare const acquireVsCodeApi: Function;
 
 interface VSCodeApi {
-  getState: () => any
-  setState: (newState: any) => any
-  postMessage: (message: any) => void
+  getState: () => any;
+  setState: (newState: any) => any;
+  postMessage: (message: any) => void;
 }
 
-class VSCodeWrapper {
-  private readonly vscodeApi: VSCodeApi = acquireVsCodeApi()
+type MessageType =
+  | { type: 'updateSettings'; payload: any }
+  | { type: 'refreshStats'; payload?: undefined }
+  | { type: 'error'; payload: string }
+  | { type: 'success'; payload: string };
 
-  /**
-   * Send a message to the extension framework.
-   * @param message
-   */
-  public postMessage(message: any): void {
-    this.vscodeApi.postMessage(message)
+class VSCodeWrapper {
+  private readonly vscodeApi: VSCodeApi;
+  private readonly messageListeners: Set<(message: MessageType) => void>;
+
+  constructor() {
+    this.vscodeApi = acquireVsCodeApi();
+    this.messageListeners = new Set();
+
+    window.addEventListener('message', event => {
+      const message = event.data as MessageType;
+      this.notifyListeners(message);
+    });
   }
 
-  /**
-   * Add listener for messages from extension framework.
-   * @param callback called when the extension sends a message
-   * @returns function to clean up the message eventListener.
-   */
-  public onMessage(callback: (message: any) => void): () => void {
-    window.addEventListener('message', callback)
-    return () => window.removeEventListener('message', callback)
+  public postMessage(message: MessageType): void {
+    this.vscodeApi.postMessage(message);
+  }
+
+  public onMessage(callback: (message: MessageType) => void): () => void {
+    this.messageListeners.add(callback);
+    return () => this.messageListeners.delete(callback);
+  }
+
+  private notifyListeners(message: MessageType): void {
+    this.messageListeners.forEach(listener => listener(message));
   }
 
   public getState = (): any => {
-    return this.vscodeApi.getState() ?? {}
+    return this.vscodeApi.getState() ?? {};
+  };
+
+  public setState = (newState: any): void => {
+    if (JSON.stringify(this.getState()) !== JSON.stringify(newState)) {
+      this.vscodeApi.setState(newState);
+    }
+  };
+
+  public updateSettings(settings: any): void {
+    this.postMessage({ type: 'updateSettings', payload: settings });
   }
 
-  public setState = (newState: any): any => {
-    return this.vscodeApi.setState(newState)
+  public refreshStats(): void {
+    this.postMessage({ type: 'refreshStats' });
+  }
+
+  public showError(message: string): void {
+    this.postMessage({ type: 'error', payload: message });
+  }
+
+  public showSuccess(message: string): void {
+    this.postMessage({ type: 'success', payload: message });
   }
 }
 
-// Singleton to prevent multiple fetches of VSCodeAPI.
-const VSCodeAPI = new VSCodeWrapper()
-export default VSCodeAPI
+const VSCodeAPI = new VSCodeWrapper();
+export default VSCodeAPI;

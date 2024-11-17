@@ -1,68 +1,88 @@
 import React, { FunctionComponent } from 'react'
-import { VscFlame } from 'react-icons/vsc'
+import { VscGear, VscSymbolColor, VscJson } from 'react-icons/vsc'
 import { Link } from 'react-router-dom'
 import Input from './lib/components/Input'
 import Toggle from './lib/components/Toggle'
-import useVSCodeState from './lib/state/reactState'
-import VSCodeAPI from './lib/VSCodeAPI'
+import { useSettings, useUpdateSetting } from './appState'
+import type { Settings } from './appState'
 
-type View1Props = {}
+const View1: FunctionComponent = () => {
+  const settings = useSettings()
+  const updateSetting = useUpdateSetting()
 
-const View1: FunctionComponent<View1Props> = props => {
-  const [val, setVal] = useVSCodeState<string>('', 'val')
-  const [success, setSuccess] = useVSCodeState<string>('', 'success')
-  const [err, setErr] = useVSCodeState<string>('', 'err')
-  const [checked, setChecked] = useVSCodeState<boolean>(false, 'checked')
-  const [checked2, setChecked2] = useVSCodeState<boolean>(false, 'checked2')
-  console.log('Rendering View1')
+  const handleSettingChange = (key: keyof Settings, value: any) => {
+    updateSetting(key, value)
+  }
+
   return (
-    <div className="p-2 flex flex-col space-y-2">
-      <div className="text-2xl font-bold text-vscode-settings-headerForeground">
-        Hello, world!
-      </div>
-      <div className="text-base text-vscode-foreground flex items-baseline">
-        <div className="text-vscode-button-foreground mr-2">
-          <VscFlame />
+    <div className="min-h-screen bg-vscode-editor text-vscode-editor p-6 vscode-scrollbar">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center space-x-2">
+          <VscGear className="text-2xl text-vscode-button" />
+          <h1 className="text-2xl font-bold text-vscode-settings-header">
+            Extension Settings
+          </h1>
         </div>
-        <div>This is some body copy. It has the base text size.</div>
-      </div>
-      <Input
-        value={val}
-        title="What is the meaning of all this?"
-        label="Life, the universe and everything."
-        placeholder="Type some numbers…"
-        success={success}
-        error={err}
-        handleChange={e => {
-          const newval = e.target.value
-          setVal(newval)
-          if (newval === '42') {
-            setSuccess('That is the correct value!')
-            setErr(undefined)
-          } else {
-            setSuccess(undefined)
-            setErr('The only correct answer is 42')
-          }
-        }}
-      />
-      <Toggle
-        title="Do you like checkboxes?"
-        label="Of course you do."
-        checked={checked}
-        handleChange={e => setChecked(e.target.checked)}
-      />
-      <Toggle
-        title="Another Checkbox"
-        label="Why not?"
-        checked={checked2}
-        handleChange={e => setChecked2(e.target.checked)}
-      />
-      <h2>Current VSCodeAPI State:</h2>
-      <code>
-        <pre>{JSON.stringify(VSCodeAPI.getState(), null, 2)}</pre>
-      </code>
-      <div>
-        <Link to="/view2">View 2</Link>
+
+        <div className="space-y-8">
+          <section className="space-y-4">
+            <div className="flex items-center space-x-2 text-lg text-vscode-settings-header">
+              <VscJson />
+              <h2>API Configuration</h2>
+            </div>
+            <Input
+              value={settings.apiEndpoint}
+              title="API Endpoint"
+              label="The base URL for API requests"
+              placeholder="https://api.example.com"
+              handleChange={e => handleSettingChange('apiEndpoint', e.target.value)}
+            />
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center space-x-2 text-lg text-vscode-settings-header">
+              <VscSymbolColor />
+              <h2>Editor Preferences</h2>
+            </div>
+            <div className="space-y-4 bg-vscode-editor p-4 rounded border border-vscode-settings-dropdownListBorder">
+              <Toggle
+                title="Dark Mode"
+                label="Use dark theme for extension views"
+                checked={settings.darkMode}
+                handleChange={e => handleSettingChange('darkMode', e.target.checked)}
+              />
+              <Toggle
+                title="Auto Save"
+                label="Automatically save changes"
+                checked={settings.autoSave}
+                handleChange={e => handleSettingChange('autoSave', e.target.checked)}
+              />
+              <Toggle
+                title="Format on Save"
+                label="Format code when saving"
+                checked={settings.formatOnSave}
+                handleChange={e => handleSettingChange('formatOnSave', e.target.checked)}
+              />
+              <Input
+                value={settings.indentSize}
+                title="Indent Size"
+                label="Number of spaces for indentation"
+                placeholder="2"
+                handleChange={e => handleSettingChange('indentSize', e.target.value)}
+              />
+            </div>
+          </section>
+        </div>
+
+        <div className="pt-4 border-t border-vscode-settings-dropdownListBorder">
+          <Link
+            to="/view2"
+            className="vscode-button inline-flex items-center space-x-2 no-underline"
+          >
+            <span>View Project Statistics</span>
+            <span>→</span>
+          </Link>
+        </div>
       </div>
     </div>
   )

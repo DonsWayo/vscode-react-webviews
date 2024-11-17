@@ -1,28 +1,39 @@
-import { nanoid } from 'nanoid'
-import React, { FunctionComponent, useMemo } from 'react'
-import FieldWithDescription from './FieldWithDescription'
+import React, { FunctionComponent } from 'react'
 
 type ToggleProps = {
-  handleChange: React.ChangeEventHandler<HTMLInputElement>
+  checked: boolean
   title: string
-  label: string
-  checked?: boolean
+  label?: string
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-const Toggle: FunctionComponent<ToggleProps> = props => {
-  const id = useMemo(() => nanoid(), [])
+const Toggle: FunctionComponent<ToggleProps> = ({
+  checked,
+  title,
+  label,
+  handleChange,
+}) => {
   return (
-    <FieldWithDescription title={props.title}>
-      <div className="flex flex-row items-center space-x-2">
+    <div className="flex flex-col space-y-1">
+      <label className="flex items-center space-x-3 cursor-pointer">
         <input
           type="checkbox"
-          onChange={props.handleChange}
-          checked={props.checked}
-          id={id}
+          checked={checked}
+          onChange={handleChange}
+          className="vscode-checkbox"
         />
-        <label htmlFor={id}>{props.label}</label>
-      </div>
-    </FieldWithDescription>
+        <div className="flex flex-col">
+          <span className="text-vscode-settings-header font-medium">
+            {title}
+          </span>
+          {label && (
+            <span className="text-sm text-vscode-description">
+              {label}
+            </span>
+          )}
+        </div>
+      </label>
+    </div>
   )
 }
 

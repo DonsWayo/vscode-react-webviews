@@ -2,14 +2,15 @@
   "name": "@githubnext/vscode-react-webviews",
   "version": "1.0.0",
   "description": "A sample/starter template for developing VS Code extensions with webviews",
-  "main": "out/extension.js",
+  "main": "out/extension.cjs",
+  "type": "module",
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && node esbuild.config.js",
     "lint": "eslint . --ext .ts,.tsx",
-    "watch": "tsc -watch -p ./",
+    "watch": "tsc -watch -p",
     "format": "prettier --write **/*.ts",
-    "dev": "vite build"
+    "dev": "vite build --watch"
   },
   "engines": {
     "vscode": "^1.52.0"
@@ -28,37 +29,33 @@
   },
   "homepage": "https://github.com/githubnext/vscode-react-webviews.git#readme",
   "devDependencies": {
-    "@githubocto/tailwind-vscode": "^1.0.4",
-    "@types/node": "^16.4.13",
-    "@types/react": "^17.0.16",
-    "@types/react-dom": "^17.0.9",
-    "@types/tailwindcss": "^2.2.1",
-    "@types/vscode": "^1.59.0",
-    "@typescript-eslint/eslint-plugin": "^5.1.0",
-    "@typescript-eslint/parser": "^5.1.0",
-    "autoprefixer": "^10.3.1",
-    "eslint": "^8.1.0",
-    "postcss": "^8.3.6",
-    "postcss-nested": "^5.0.6",
-    "prettier": "^2.3.2",
-    "tailwindcss": "^2.2.7",
-    "typescript": "^4.3.5"
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/tailwindcss": "^3.1.0",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.14.0",
+    "@typescript-eslint/parser": "^8.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.20",
+    "esbuild": "^0.20.0",
+    "eslint": "^9.15.0",
+    "postcss": "^8.4.49",
+    "postcss-nested": "^7.0.2",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@hediet/node-reload": "^0.7.3",
-    "history": "^5.0.1",
-    "nanoid": "^3.1.23",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-icons": "^4.2.0",
-    "react-router-dom": "^6.0.0-beta.2",
-    "vite": "^2.4.4",
-    "zustand": "^3.5.12"
+    "@hediet/node-reload": "^0.8.0",
+    "nanoid": "^5.0.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.3.0",
+    "react-router-dom": "^6.28.0",
+    "vite": "^5.4.11",
+    "zustand": "^5.0.1"
   },
-  "activationEvents": [
-    "onCommand:NextWebview1.start",
-    "onCommand:NextWebview2.start"
-  ],
   "contributes": {
     "commands": [
       {

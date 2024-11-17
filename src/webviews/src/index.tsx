@@ -1,55 +1,36 @@
-import React, { useEffect } from 'react'
-import ReactDOM from 'react-dom'
-import View1 from './View1'
-import View2 from './View2'
-import './lib/vscode.css'
-import {
-  MemoryRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom';
+import View1 from './View1';
+import View2 from './View2';
+import VSCodeAPI from './lib/VSCodeAPI';
+import './lib/vscode.css';
 
-// TODO: Type the incoming config data
-let config: any = {}
-let workspace = ''
+// Initialize VSCode API once
+VSCodeAPI;
 
-const root = document.getElementById('root')
+// Get initial route from root element
+const root = document.getElementById('root');
+const initialRoute = root?.getAttribute('data-route') || 'view1';
 
-if (root) {
-  workspace = root.getAttribute('data-workspace') || ''
-}
-
-window.addEventListener('message', e => {
-  // Here's where you'd do stuff with the message
-  // Maybe stick it into state management or something?
-  const message = e.data
-  console.debug(message)
-})
-
-const rootEl = document.getElementById('root')
-
-function AppRoutes() {
-  let location = useLocation()
-  let navigate = useNavigate()
-  useEffect(() => {
-    navigate(`/${rootEl.dataset.route}`, { replace: true })
-  }, [])
-
+// Main App component with routing
+const App: React.FC = () => {
   return (
-    <Routes>
-      <Route path="view1" element={<View1 />} />
-      <Route path="view2" element={<View2 />} />
-    </Routes>
-  )
-}
+    <MemoryRouter initialEntries={[`/${initialRoute}`]} initialIndex={0}>
+      <Routes>
+        <Route path="/view1" element={<View1 />} />
+        <Route path="/view2" element={<View2 />} />
+        <Route path="*" element={<Navigate to={`/${initialRoute}`} replace />} />
+      </Routes>
+    </MemoryRouter>
+  );
+};
 
-ReactDOM.render(
-  <React.StrictMode>
-    <Router initialEntries={[rootEl.dataset.route]} initialIndex={0}>
-      <AppRoutes />
-    </Router>
-  </React.StrictMode>,
-  rootEl
-)
+// Render the app
+if (root) {
+  ReactDOM.createRoot(root).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}

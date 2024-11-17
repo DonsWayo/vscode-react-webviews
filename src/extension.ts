@@ -1,57 +1,107 @@
-// import {
-//   enableHotReload,
-//   hotRequireExportedFn,
-//   registerUpdateReconciler,
-// } from '@hediet/node-reload'
-// import { Disposable } from '@hediet/std/disposable'
 import * as vscode from 'vscode'
-// import MyWebview from './MyWebview'
-import { NextWebviewPanel } from './NextWebview'
 
-// if (process.env.NODE_ENV === 'development') {
-//   enableHotReload({ entryModule: module })
-// }
-// registerUpdateReconciler(module)
+type MessageType =
+  | { type: 'updateSettings'; payload: any }
+  | { type: 'refreshStats'; payload?: undefined }
+  | { type: 'error'; payload: string }
+  | { type: 'success'; payload: string };
 
-// export class Extension {
-//   public readonly dispose = Disposable.fn()
+export async function activate(context: vscode.ExtensionContext) {
+  console.log('Debug: Extension activating');
 
-//   constructor() {
-//     super()
+  try {
+    const { NextWebviewPanel } = await import('./NextWebview')
+    console.log('Debug: Successfully imported NextWebviewPanel');
 
-//     // Disposables are disposed automatically on reload.
-//     const item = this.dispose.track(vscode.window.createStatusBarItem())
-//     item.text = 'Hallo Welt'
-//     item.show()
-//   }
-// }
+    // Register webview commands
+    context.subscriptions.push(
+      vscode.commands.registerCommand('NextWebview1.start', async () => {
+        console.log('Debug: Starting View1');
+        try {
+          NextWebviewPanel.getInstance({
+            extensionUri: context.extensionUri,
+            route: 'view1',
+            title: 'Extension Settings',
+            viewId: 'ghnextA',
+            handleMessage: (message: MessageType) => {
+              console.log('Debug: Received message in View1:', message);
+              switch (message.type) {
+                case 'updateSettings':
+                  const config = vscode.workspace.getConfiguration('vscodeReactWebviews')
+                  Object.entries(message.payload).forEach(([key, value]) => {
+                    config.update(key, value, vscode.ConfigurationTarget.Global)
+                  })
+                  vscode.window.showInformationMessage('Settings updated successfully')
+                  break
 
-export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand('NextWebview1.start', () => {
-      const webview = NextWebviewPanel.getInstance({
-        extensionUri: context.extensionUri,
-        route: 'view1',
-        title: 'GitHub Next Webview 1',
-        viewId: 'ghnextA',
+                case 'error':
+                  vscode.window.showErrorMessage(message.payload)
+                  break
+
+                case 'success':
+                  vscode.window.showInformationMessage(message.payload)
+                  break
+              }
+            }
+          })
+        } catch (error) {
+          console.error('Debug: Error starting View1:', error);
+          vscode.window.showErrorMessage(`Failed to start View1: ${error}`);
+        }
+      }),
+      vscode.commands.registerCommand('NextWebview2.start', async () => {
+        console.log('Debug: Starting View2');
+        try {
+          NextWebviewPanel.getInstance({
+            extensionUri: context.extensionUri,
+            route: 'view2',
+            title: 'Project Statistics',
+            viewId: 'ghnextB',
+            handleMessage: (message: MessageType) => {
+              console.log('Debug: Received message in View2:', message);
+              switch (message.type) {
+                case 'refreshStats':
+                  const workspaceFolders = vscode.workspace.workspaceFolders
+                  if (workspaceFolders) {
+                    const stats = {
+                      totalFiles: 156,
+                      fileTypes: {
+                        typescript: 45,
+                        javascript: 32,
+                        json: 12,
+                        markdown: 8,
+                        other: 59,
+                      },
+                      linesOfCode: 12453,
+                      recentCommits: [
+                        { id: 1, message: 'Update dependencies', time: '2 hours ago' },
+                        { id: 2, message: 'Fix navigation bug', time: '5 hours ago' },
+                        { id: 3, message: 'Add new feature', time: '1 day ago' },
+                      ]
+                    }
+                  }
+                  break
+
+                case 'error':
+                  vscode.window.showErrorMessage(message.payload)
+                  break
+
+                case 'success':
+                  vscode.window.showInformationMessage(message.payload)
+                  break
+              }
+            }
+          })
+        } catch (error) {
+          console.error('Debug: Error starting View2:', error);
+          vscode.window.showErrorMessage(`Failed to start View2: ${error}`);
+        }
       })
-      // const webview = MyWebview.createOrShow(context.extensionUri)
-      // setInterval(() => {
-      //   // MyWebview.update()
-      //   console.debug('!!!!!! reloading webview!')
-      // }, 1000)
-    }),
-    vscode.commands.registerCommand('NextWebview2.start', () => {
-      const webview = NextWebviewPanel.getInstance({
-        extensionUri: context.extensionUri,
-        route: 'view2',
-        title: 'GitHub Next Webview 2',
-        viewId: 'ghnextB',
-      })
-    })
-  )
+    )
 
-  // context.subscriptions.push(
-  //   hotRequireExportedFn(module, Extension, Extension => new Extension())
-  // )
+    console.log('Debug: Extension activated successfully');
+  } catch (error) {
+    console.error('Debug: Error during extension activation:', error);
+    vscode.window.showErrorMessage(`Failed to activate extension: ${error}`);
+  }
 }

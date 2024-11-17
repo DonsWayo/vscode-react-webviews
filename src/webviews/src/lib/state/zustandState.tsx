@@ -1,37 +1,51 @@
-import { nanoid } from 'nanoid'
-import create, { State, StateCreator, UseStore } from 'zustand'
-import { persist, StateStorage } from 'zustand/middleware'
+import { create, StateCreator } from 'zustand'
+import { persist, createJSONStorage, PersistOptions } from 'zustand/middleware'
 import VSCodeAPI from '../VSCodeAPI'
 
-/**
- * Creates a Zustand store which is automatically persisted to VS Code state.
- *
- * @export
- * @template TState
- * @param {string} name A globally-unique name for the store.
- * @param {StateCreator<TState>} createState A function which creates the initial state.
- * @return {*}  {UseStore<TState>}
- */
-export default function createVSCodeZustand<TState extends State>(
-  name: string,
-  createState: StateCreator<TState>
-): UseStore<TState> {
-  return create(
-    persist(createState, {
-      name,
-      getStorage: () => VSCodeStateStorage,
-    })
-  )
+type VSCodeStorage = {
+  getItem: (name: string) => any | null
+  setItem: (name: string, value: any) => void
+  removeItem: (name: string) => void
 }
 
-const VSCodeStateStorage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    return await VSCodeAPI.getState()[name]
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    return VSCodeAPI.setState({
-      ...VSCodeAPI.getState(),
-      [name]: value,
-    })
-  },
+export default function createVSCodeZustand<T extends object>(
+  name: string,
+  createState: StateCreator<T>
+) {
+  const storage: VSCodeStorage = {
+    getItem: (name: string) => {
+      const state = VSCodeAPI.getState();
+      return state[name] || null;
+    },
+    setItem: (name: string, value: any) => {
+      const currentState = VSCodeAPI.getState();
+      if (JSON.stringify(currentState[name]) !== JSON.stringify(value)) {
+        VSCodeAPI.setState({ ...currentState, [name]: value });
+      }
+    },
+    removeItem: (name: string) => {
+      const state = VSCodeAPI.getState();
+      const newState = { ...state };
+      delete newState[name];
+      VSCodeAPI.setState(newState);
+    },
+  };
+
+  const persistOptions: PersistOptions<T> = {
+    name,
+    storage: createJSONStorage(() => storage),
+    partialize: (state) => {
+      const persistedState = { ...state };
+      Object.keys(persistedState).forEach((key) => {
+        if (typeof persistedState[key as keyof T] === 'function') {
+          delete persistedState[key as keyof T];
+        }
+      });
+      return persistedState;
+    },
+  };
+
+  return create<T>()(
+    persist(createState, persistOptions)
+  );
 }
